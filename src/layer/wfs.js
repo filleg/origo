@@ -16,9 +16,9 @@ function createSource(options) {
   if (options.strategy === 'all') {
     queryFilter = filter ? `&CQL_FILTER=${filter}` : '';
   } else {
-    queryFilter = filter ? `&CQL_FILTER=${filter} AND BBOX(${options.geometryName},` : '&BBOX=';
+    queryFilter = filter ? `&EXP_FILTER=${filter}` : '';
   }
-  const bboxProjectionCode = filter ? `'${options.dataProjection}')` : options.dataProjection;
+
   const vectorSource = new VectorSource({
     attributions: options.attribution,
     format: new GeoJSONFormat({
@@ -27,16 +27,10 @@ function createSource(options) {
       featureProjection: options.projectionCode
     }),
     loader(extent) {
-      let requestExtent;
-      if (options.dataProjection !== options.projectionCode) {
-        requestExtent = transformExtent(extent, options.projectionCode, options.dataProjection);
-      } else {
-        requestExtent = extent;
-      }
       let url = [`${serverUrl}?service=WFS`,
         `&version=1.1.0&request=GetFeature&typeName=${options.featureType}&outputFormat=application/json`,
         `&srsname=${options.dataProjection}`].join('');
-      url += options.strategy === 'all' ? queryFilter : `${queryFilter + requestExtent.join(',')},${bboxProjectionCode}`;
+      url += options.strategy === 'all' ? queryFilter : `${queryFilter}`;
       url = encodeURI(url);
 
       fetch(url).then(response => response.json({
